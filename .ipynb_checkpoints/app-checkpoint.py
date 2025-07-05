@@ -27,9 +27,9 @@ print("[✓] Đã load xong model và vectorizer.")
 
 # ── API keys ───────────────────────────────────────────────────────
 API_KEYS = {
-    "google":     "AIza...yourkey...",
-    "virustotal": "649...yourkey...",
-    "ipinfo":     "7a2...yourkey...",
+    "google":     "",
+    "virustotal": "",
+    "ipinfo":     "",
 }
 
 # ── Kiểm tra model predict được không ──────────────────────────────

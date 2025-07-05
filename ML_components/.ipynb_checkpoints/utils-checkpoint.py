@@ -2,13 +2,14 @@ import re
 import unicodedata
 from urllib.parse import urlparse
 
-# Bỏ dấu tiếng Việt, chuẩn hóa cho tiếng Anh không dấu
 def remove_vietnamese_diacritics(text: str) -> str:
     text = ''.join(
         c for c in unicodedata.normalize('NFD', text)
         if unicodedata.category(c) != 'Mn'
     )
-    return re.sub(r'\s+', ' ', text).strip().lower()
+    return re.sub(r'\s+', '', text).lower()
+
+
 
 # Chuẩn hóa URL: bỏ http/https và www, đưa về dạng domain/path?query
 def strip_scheme_www(url: str) -> str:
@@ -53,4 +54,4 @@ RAW_KEYWORDS = [
 SUSPICIOUS_KEYWORDS = sorted(set(k.strip().lower() for k in RAW_KEYWORDS))
 
 
-SUSPICIOUS_KEYWORDS = [remove_vietnamese_diacritics(w) for w in RAW_KEYWORDS]
+SUSPICIOUS_KEYWORDS = [remove_vietnamese_diacritics(w).replace(" ", "") for w in RAW_KEYWORDS]

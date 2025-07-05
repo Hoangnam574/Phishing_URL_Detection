@@ -76,14 +76,22 @@ def fetch_title(url, timeout=5):
         scraper = cloudscraper.create_scraper()
         resp = scraper.get(url, timeout=timeout)
         if resp.status_code == 200:
-            resp.encoding = resp.apparent_encoding  # <--- DÒNG QUAN TRỌNG để fix lỗi mã hóa
-            soup = BeautifulSoup(resp.text, "html.parser")
+            try:
+                # Ưu tiên ép UTF-8
+                resp.encoding = 'utf-8'
+                text = resp.text
+            except UnicodeDecodeError:
+                # Nếu UTF-8 lỗi, fallback về apparent_encoding hoặc latin1
+                resp.encoding = resp.apparent_encoding or 'latin1'
+                text = resp.text
+
+            soup = BeautifulSoup(text, "html.parser")
             if soup.title and soup.title.string:
-                title = soup.title.string.strip()
-                return remove_vietnamese_diacritics(title)
+                return soup.title.string.strip()
     except Exception as e:
         print("Title Fetch Error:", e)
     return ""
+
 
 
 def extract_features_from_apis(url, keys):

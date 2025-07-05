@@ -74,6 +74,15 @@ def check_domain_exists(url: str) -> bool:
     except:
         return False
 
+def dedup_sub_keywords(hit_words):
+    hit_words = sorted(hit_words, key=len, reverse=True)
+    unique_hits = []
+    for w in hit_words:
+        if not any(w in longer for longer in unique_hits):
+            unique_hits.append(w)
+    return unique_hits
+
+
 def calculate_risk_score(ai_prediction: int, api_features: dict, url: str = "", title: str = "", domain_ok: bool = True) -> tuple[int, int]:
     url_clean   = remove_vietnamese_diacritics(url.lower())
     title_clean = remove_vietnamese_diacritics(title.lower())
@@ -83,8 +92,10 @@ def calculate_risk_score(ai_prediction: int, api_features: dict, url: str = "", 
 
     # Tính keyword hits
     keywords = set(SUSPICIOUS_KEYWORDS)
-    url_hit_words   = [] if is_ip_url else [w for w in keywords if w in url_clean]
-    title_hit_words = [w for w in keywords if w in title_clean]
+    url_raw_hits   = [] if is_ip_url else [w for w in keywords if w in url_clean]
+    title_raw_hits = [w for w in keywords if w in title_clean]
+    url_hit_words   = dedup_sub_keywords(url_raw_hits)
+    title_hit_words = dedup_sub_keywords(title_raw_hits)
     url_hits        = len(url_hit_words)
     title_hits      = len(title_hit_words)
     has_url_kw      = url_hits > 0
@@ -102,7 +113,6 @@ def calculate_risk_score(ai_prediction: int, api_features: dict, url: str = "", 
     score     = 0.0
     ai_score  = int(ai_prediction >= 0.5)
 
-    # Ép AI nếu API quá nguy hiểm
     if ai_score == 0:
         if sb and wr and vt >= 1:
             ai_score = 1
@@ -156,8 +166,7 @@ def calculate_risk_score(ai_prediction: int, api_features: dict, url: str = "", 
 
     if not domain_ok:
         score += 2
-
-    # Nếu AI chưa cảnh báo mà điểm đủ cao thì ép
+        
     if ai_score == 0 and score >= 7:
         ai_score = 1
         score += 1

@@ -10,6 +10,15 @@ from ML_components.utils import (
 )
 
 
+def dedup_sub_keywords(hit_words):
+    """Loại bỏ các từ khoá là phần con của từ khoá dài hơn đã match."""
+    hit_words = sorted(hit_words, key=len, reverse=True)  # từ dài nhất trước
+    unique_hits = []
+    for w in hit_words:
+        if not any(w in longer for longer in unique_hits):
+            unique_hits.append(w)
+    return unique_hits
+
 class TitleFeatureExtractor(BaseEstimator, TransformerMixin):
     def __init__(self, title_mapping: dict):
         self.title_mapping = title_mapping or {}
@@ -23,7 +32,12 @@ class TitleFeatureExtractor(BaseEstimator, TransformerMixin):
             clean = strip_scheme_www(url)
             title_raw = self.title_mapping.get(clean, "") or ""
             title_norm = remove_vietnamese_diacritics(title_raw.lower())
-            kw_cnt = sum(1 for w in SUSPICIOUS_KEYWORDS if w in title_norm)
+
+            # Tìm các từ khoá có trong title
+            matched_keywords = [w for w in SUSPICIOUS_KEYWORDS if w in title_norm]
+            filtered_keywords = dedup_sub_keywords(matched_keywords)
+            kw_cnt = len(filtered_keywords)
+
             features.append([len(title_norm), kw_cnt])
             print(f"[✓] Title chuẩn hóa: \"{title_norm}\" → KW hits: {kw_cnt}")
         return np.array(features)
